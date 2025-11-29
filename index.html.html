@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sonic Runner: prime 🛡️</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87ceeb;
+      font-family: 'Press Start 2P', cursive;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    @font-face {
+      font-family: 'Press Start 2P';
+      src: url('https://fonts.gstatic.com/s/pressstart2p/v14/87gXNY9q0T7iZgU9C5hB.woff2') format('woff2');
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background: #87ceeb;
+      border-bottom: 4px solid #33691e;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    }
+    .game-ui {
+      display: flex;
+      justify-content: space-between;
+      width: 800px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    h1 {
+      color: #fff;
+      margin: 0;
+      font-size: 26px;
+      text-shadow: 2px 2px 5px #000;
+    }
+    .game-controls {
+      display: flex;
+      gap: 10px;
+    }
+    .game-controls button {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    #pauseBtn {
+      background-color: #2196f3;
+      color: #fff;
+    }
+    #restartBtn {
+      background-color: #4caf50;
+      color: #fff;
+    }
+    #speedBtn {
+      background-color: #ff9800;
+      color: #fff;
+    }
+    #skipToEndBtn {
+      background-color: #9c27b0;
+      color: #fff;
+    }
+    #achievementsBtn {
+      background-color: #607d8b;
+      color: #fff;
+    }
+    #musicBtn {
+      background-color: #795548;
+      color: #fff;
+    }
+    #sfxBtn {
+      background-color: #ff5722;
+      color: #fff;
+    }
+    #continueBtn {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 22px;
+      background: #ff5252;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      z-index: 10;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-family: 'Press Start 2P', cursive;
+    }
+    #gameStatus {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 40px;
+      text-shadow: 2px 2px 8px #000;
+      display: none;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+    }
+    #finalMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #000;
+      font-size: 30px;
+      text-shadow: 2px 2px 8px #fff;
+      display: none;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      line-height: 1.5;
+      width: 700px;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
+    }
+    .level-indicator {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: gold;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      border: 2px solid gold;
+      z-index: 100;
+    }
+
+    /* NUEVOS ESTILOS PARA MEJORAS */
+    .progress-container {
+      width: 800px;
+      margin: 10px 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    #distanceProgress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 10px;
+      color: #fff;
+    }
+    
+    .powerup-indicators {
+      display: flex;
+      gap: 15px;
+      margin: 10px 0;
+    }
+    
+    .powerup-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #fff;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+    
+    .powerup-indicator.active {
+      opacity: 1;
+      text-shadow: 0 0 5px gold;
+    }
+    
+    .powerup-icon {
+      width: 16px;
+      height: 16px;
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+    
+    .mini-score-popup {
+      position: absolute;
+      color: gold;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #000;
+      pointer-events: none;
+      animation: floatUp 1s forwards;
+      z-index: 100;
+    }
+    
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-40px); opacity: 0; }
+    }
+    
+    .ground-dust {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: dustFade 0.6s forwards;
+      z-index: 5;
+    }
+    
+    @keyframes dustFade {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    
+    .controls-hint {
+      margin-top: 10px;
+      color: rgba(255,255,255,0.7);
+      font-size: 10px;
+      text-align: center;
+      animation: pulseHint 2s infinite;
+    }
+    
+    @keyframes pulseHint {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
+    .combo-indicator {
+      position: absolute;
+      top: 60px;
+      right: 10px;
+      font-size: 12px;
+      color: limegreen;
+      text-shadow: 1px 1px 2px #000;
+      display: none;
+    }
+    
+    /* ESTILOS PARA LOGROS */
+    .achievement-popup {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.8);
+      color: gold;
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid gold;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      max-width: 300px;
+      transform: translateX(400px);
+      transition: transform 0.5s ease;
+      z-index: 1000;
+      text-align: center;
+    }
+
+    .achievement-popup.show {
+      transform: translateX(0);
+    }
+
+    .achievement-popup h3 {
+      margin: 0 0 8px 0;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .achievement-popup p {
+      margin: 0;
+      color: #ccc;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .achievement-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    /* ESTILOS PARA EFECTO DE VELOCIDAD */
+    .speed-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    
+    .speed-effect.active {
+      opacity: 1;
+      animation: speedLines 0.3s linear infinite;
+    }
+    
+    @keyframes speedLines {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 20px; }
+    }
+    
+    .speed-effect::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+      );
+      background-size: 100% 20px;
+    }
+    
+    /* NUEVOS ESTILOS PARA CONTROL DE SONIDO SEPARADO */
+    .sound-controls-container {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 800px;
+    }
+    
+    .sound-controls {
+      display: none;
+      background: rgba(0,0,0,0.8);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 10px;
+      width: 100%;
+      max-width: 600px;
+      box-sizing: border-box;
+    }
+    
+    .sound-controls.show {
+      display: block;
+    }
+    
+    .sound-control-group {
+      margin-bottom: 15px;
+    }
+    
+    .sound-control-group label {
+      display: block;
+      color: white;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    
+    .volume-slider {
+      width: 100%;
+      height: 10px;
+      -webkit-appearance: none;
+      background: #333;
+      border-radius: 5px;
+      outline: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4caf50;
+      cursor: pointer;
+    }
+    
+    .music-selector {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .music-selector button {
+      flex: 1;
+      padding: 8px 5px;
+      font-size: 10px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-family: 'Press Start 2P', cursive;
+    }
+    
+    .music-selector button.active {
+      background: #4caf50;
+    }
+    
+    .sound-control-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      font-size: 10px;
+      color: white;
+    }
+    
+    .sound-control-footer button {
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+    }
+    
+    /* ESTILOS PARA BOTONES EN LA PARTE INFERIOR */
+    .reset-achievements-container {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      width: 800px;
+      gap: 10px; /* Espacio entre los botones */
+    }
+    
+    .reset-achievements-btn, .options-menu-btn {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      padding: 10px 20px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .reset-achievements-btn {
+      background: #ff5722;
+    }
+
+    .options-menu-btn {
+        background: #00bcd4; /* Color azul cian para el nuevo botón */
+    }
+    
+    .reset-achievements-btn:hover {
+      background: #ff7043;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+    
+    .options-menu-btn:hover {
+        background: #4dd0e1;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+
+    .reset-achievements-btn:active, .options-menu-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* NUEVOS ESTILOS PARA EL MENÚ DE OPCIONES */
+    #optionsMenu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        color: white;
+        font-family: 'Press Start 2P', cursive;
+        text-align: center;
+    }
+
+    #optionsMenu.show {
+        display: flex;
+    }
+
+    #optionsMenu h2 {
+        color: #fff;
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px #000;
+    }
+
+    .menu-section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 2px solid #00bcd4;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.1);
+        width: 90%;
+        max-width: 600px;
+    }
+
+    .menu-section h3 {
+        font-size: 18px;
+        color: #00bcd4;
+        margin-top: 0;
+    }
+
+    .color-selector, .level-selector {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .color-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: border 0.2s, transform 0.2s;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    .color-option.selected {
+        border-color: gold;
+        transform: scale(1.1);
+    }
+
+    .level-btn {
+        font-family: 'Press Start 2P', cursive;
+        font-size: 10px;
+        padding: 10px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .level-btn.selected {
+        background: #ff9800;
+        border: 2px solid gold;
+    }
+
+    #closeOptionsBtn {
+        margin-top: 30px;
+        font-family: 'Press Start 2P', cursive;
+        padding: 15px 30px;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 0 6px #d32f2f;
+        transition: all 0.1s;
+    }
+
+    #closeOptionsBtn:active {
+        box-shadow: 0 2px #d32f2f;
+        transform: translateY(4px);
+    }
+
+    /* ESTILOS PARA TEXTURAS ESPECIALES */
+    .ice-texture {
+        background: linear-gradient(45deg, #E0F7FA 25%, transparent 25%),
+                    linear-gradient(-45deg, #E0F7FA 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #E0F7FA 75%),
+                    linear-gradient(-45deg, transparent 75%, #E0F7FA 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    .forest-texture {
+        background-image: 
+            radial-gradient(circle at 10% 20%, rgba(0,100,0,0.1) 0%, transparent 20%),
+            radial-gradient(circle at 90% 80%, rgba(0,100,0,0.1) 0%, transparent 20%);
+    }
+
+    .clouds-texture {
+        background-image: 
+            radial-gradient(circle at 20% 30%, white 0%, transparent 25%),
+            radial-gradient(circle at 80% 70%, white 0%, transparent 25%);
+    }
+
+    .sand-texture {
+        background-image: 
+            linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.2) 55%, transparent 55%),
+            linear-gradient(-45deg, transparent 45%, rgba(255,255,255,0.2) 45%, rgba(255,255,255,0.2) 55%, transparent 55%);
+        background-size: 30px 30px;
+    }
+
+    .crystal-texture {
+        background-image: 
+            linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.3) 49%, rgba(255,255,255,0.3) 51%, transparent 51%),
+            linear-gradient(-45deg, transparent 49%, rgba(255,255,255,0.3) 49%, rgba(255,255,255,0.3) 51%, transparent 51%);
+        background-size: 15px 15px;
+    }
+
+    .lava-texture {
+        background-image: 
+            radial-gradient(circle at 30% 30%, rgba(255,69,0,0.4) 0%, transparent 20%),
+            radial-gradient(circle at 70% 70%, rgba(255,140,0,0.4) 0%, transparent 20%);
+    }
+  </style>
+</head>
+<body>
+  <div class="game-ui">
+    <h1> Sonic Runner: prime 🛡️</h1>
+    <div class="game-controls">
+      <button id="pauseBtn">⏸️ Pausa</button>
+      <button id="restartBtn">🔁 Reiniciar</button>
+      <button id="speedBtn">🚀 Velocidad 1x</button>
+      <button id="skipToEndBtn">🏁 Saltar al Final</button>
+      <button id="achievementsBtn">🏆 Logros</button>
+      <button id="musicBtn">🎵 Música</button>
+      <button id="sfxBtn">🔊 Efectos</button>
+    </div>
+  </div>
+
+  <div class="level-indicator" id="levelIndicator">NIVEL 1: Green Hill - 0/2500m</div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div id="distanceProgress"></div>
+    </div>
+    <div class="progress-labels">
+      <span>0m</span>
+      <span id="midLabel">1250m</span>
+      <span id="endLabel">2500m</span>
+    </div>
+  </div>
+
+  <div class="powerup-indicators">
+    <div class="powerup-indicator" id="shieldIndicator">
+      <div class="powerup-icon" style="background-image: url('assets/shield.png')"></div>
+      <span>ESCUDO</span>
+    </div>
+    <div class="powerup-indicator" id="magnetIndicator">
+      <div class="powerup-icon" style="background-image: url('assets/magnet.png')"></div>
+      <span>IMÁN x2</span>
+    </div>
+    <div class="powerup-indicator" id="invincibleIndicator">
+      <div class="powerup-icon" style="background-color: cyan; border-radius: 50%;"></div>
+      <span>INVENCIBLE</span>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div id="gameStatus"></div>
+    <button id="continueBtn">Continuar</button>
+    <div id="finalMessage"></div>
+    <div class="combo-indicator" id="comboIndicator">COMBO x<span id="comboMultiplier">1</span></div>
+    <div class="speed-effect" id="speedEffect"></div>
+  </div>
+
+  <div class="controls-hint">🔼 ESPACIO o CLIC para SALTAR</div>
+
+  <div class="sound-controls-container">
+    <!-- Controles de Música -->
+    <div class="sound-controls" id="musicControls">
+      <div class="sound-control-group">
+        <label for="musicVolumeSlider">VOLUMEN MÚSICA:</label>
+        <input type="range" id="musicVolumeSlider" class="volume-slider" min="0" max="100" value="50">
+      </div>
+      
+      <div class="sound-control-group">
+        <label>MÚSICA DE FONDO:</label>
+        <div class="music-selector">
+          <button id="music1Btn" class="active">MÚSICA 1</button>
+          <button id="music2Btn">MÚSICA 2</button>
+          <button id="music3Btn">MÚSICA 3</button>
+        </div>
+      </div>
+      
+      <div class="sound-control-footer">
+        <span id="currentMusicVolume">Volumen Música: 50%</span>
+        <button id="closeMusicBtn">CERRAR</button>
+      </div>
+    </div>
+
+    <!-- Controles de Efectos de Sonido -->
+    <div class="sound-controls" id="sfxControls">
+      <div class="sound-control-group">
+        <label for="sfxVolumeSlider">VOLUMEN EFECTOS:</label>
+        <input type="range" id="sfxVolumeSlider" class="volume-slider" min="0" max="100" value="50">
+      </div>
+      
+      <div class="sound-control-group">
+        <label>EFECTOS DE SONIDO:</label>
+        <div class="sound-effects-info">
+          <p style="color: #ccc; font-size: 10px; margin: 5px 0;">Salto, monedas, pájaros, muerte, etc.</p>
+        </div>
+      </div>
+      
+      <div class="sound-control-footer">
+        <span id="currentSfxVolume">Volumen Efectos: 50%</span>
+        <button id="closeSfxBtn">CERRAR</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="reset-achievements-container">
+    <button id="resetAchievementsBtn" class="reset-achievements-btn">🔄 Reiniciar Logros</button>
+    <button id="optionsMenuBtn" class="options-menu-btn">⚙️ Opciones</button>
+  </div>
+  
+  <div id="optionsMenu">
+    <h2>⚙️ MENÚ DE OPCIONES</h2>
+    
+    <div class="menu-section">
+        <h3>🌎 SELECCIÓN DE NIVEL</h3>
+        <div class="level-selector" id="levelSelector">
+            <button class="level-btn" data-level="1">NIVEL 1: Green Hill</button>
+            <button class="level-btn" data-level="2">NIVEL 2: Lava Zone</button>
+            <button class="level-btn" data-level="3">NIVEL 3: Ice Mountain</button>
+            <button class="level-btn" data-level="4">NIVEL 4: Dark Forest</button>
+            <button class="level-btn" data-level="5">NIVEL 5: Sky Palace</button>
+            <button class="level-btn" data-level="6">NIVEL 6: Desert Ruins</button>
+            <button class="level-btn" data-level="7">NIVEL 7: Crystal Cave</button>
+            <button class="level-btn" data-level="8">NIVEL 8: Volcano Core</button>
+        </div>
+    </div>
+    
+    <div class="menu-section">
+        <h3>🎨 COLOR DEL PERSONAJE</h3>
+        <div class="color-selector" id="colorSelector">
+            </div>
+    </div>
+    
+    <button id="closeOptionsBtn">CERRAR</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const continueBtn = document.getElementById("continueBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const speedBtn = document.getElementById("speedBtn");
+    const skipToEndBtn = document.getElementById("skipToEndBtn");
+    const achievementsBtn = document.getElementById("achievementsBtn");
+    const gameStatus = document.getElementById("gameStatus");
+    const finalMessage = document.getElementById("finalMessage");
+    const speedEffect = document.getElementById("speedEffect");
+
+    // NUEVAS VARIABLES PARA MEJORAS
+    const distanceProgress = document.getElementById("distanceProgress");
+    const shieldIndicator = document.getElementById("shieldIndicator");
+    const magnetIndicator = document.getElementById("magnetIndicator");
+    const invincibleIndicator = document.getElementById("invincibleIndicator");
+    const comboIndicator = document.getElementById("comboIndicator");
+    const comboMultiplier = document.getElementById("comboMultiplier");
+    const levelIndicator = document.getElementById("levelIndicator");
+    const midLabel = document.getElementById("midLabel");
+    const endLabel = document.getElementById("endLabel");
+
+    // NUEVAS VARIABLES PARA CONTROL DE SONIDO SEPARADO
+    const musicBtn = document.getElementById("musicBtn");
+    const sfxBtn = document.getElementById("sfxBtn");
+    const musicControls = document.getElementById("musicControls");
+    const sfxControls = document.getElementById("sfxControls");
+    const musicVolumeSlider = document.getElementById("musicVolumeSlider");
+    const sfxVolumeSlider = document.getElementById("sfxVolumeSlider");
+    const currentMusicVolume = document.getElementById("currentMusicVolume");
+    const currentSfxVolume = document.getElementById("currentSfxVolume");
+    const closeMusicBtn = document.getElementById("closeMusicBtn");
+    const closeSfxBtn = document.getElementById("closeSfxBtn");
+    const music1Btn = document.getElementById("music1Btn");
+    const music2Btn = document.getElementById("music2Btn");
+    const music3Btn = document.getElementById("music3Btn");
+
+    // NUEVAS VARIABLES PARA BOTONES INFERIORES
+    const resetAchievementsBtn = document.getElementById("resetAchievementsBtn");
+    const optionsMenuBtn = document.getElementById("optionsMenuBtn");
+    const optionsMenu = document.getElementById("optionsMenu");
+    const closeOptionsBtn = document.getElementById("closeOptionsBtn");
+    const colorSelector = document.getElementById("colorSelector");
+    const levelSelector = document.getElementById("levelSelector");
+
+    // SISTEMA DE NIVELES ACTUALIZADO CON MEJORAS VISUALES
+    let nivelActual = 1;
+    // Metas para todos los niveles (originales + nuevos)
+    const nivelMetas = {
+        1: 2500,
+        2: 3500,
+        3: 5000,
+        4: 7000,
+        5: 10000,
+        6: 4000,  // NUEVO NIVEL 6
+        7: 4500,  // NUEVO NIVEL 7
+        8: 6000   // NUEVO NIVEL 8
+    };
+    
+    // CONFIGURACIONES MEJORADAS PARA NIVELES 3-7
+    const nivelConfig = {
+        1: { 
+            nombre: "Green Hill", 
+            colorFondo: "#87ceeb", 
+            colorColina1: "#388E3C", 
+            colorColina2: "#4CAF50", 
+            colorSuelo1: "#A0522D", 
+            colorSuelo2: "#8B4513", 
+            colorObstaculos: "#6D4C41", 
+            dificultad: 1
+        },
+        2: { 
+            nombre: "Lava Zone", 
+            colorFondo: "#A9D0F5", 
+            colorColina1: "#4F9C4F", 
+            colorColina2: "#6BCC6B", 
+            colorSuelo1: "#DAA520", 
+            colorSuelo2: "#8B4513", 
+            colorObstaculos: "#388E3C", 
+            dificultad: 1
+        },
+        // NIVEL 3 MEJORADO - Ice Mountain
+        3: { 
+            nombre: "Ice Mountain", 
+            colorFondo: "#E6F3FF", 
+            colorColina1: "#B3E0FF", 
+            colorColina2: "#99D6FF",
+            colorSuelo1: "#C0C0C0", 
+            colorSuelo2: "#E0E0E0",
+            colorObstaculos: "#8B4513",
+            colorParticulas: "#FFFFFF",
+            texturaSuelo: "ice",
+            dificultad: 1
+        },
+        // NIVEL 4 MEJORADO - Dark Forest
+        4: { 
+            nombre: "Dark Forest", 
+            colorFondo: "#1A3C27", 
+            colorColina1: "#2D5A3D", 
+            colorColina2: "#3A6B47",
+            colorSuelo1: "#4E3524", 
+            colorSuelo2: "#6B4E37",
+            colorObstaculos: "#9370DB",
+            colorParticulas: "#90EE90",
+            texturaSuelo: "forest",
+            dificultad: 0.8
+        },
+        // NIVEL 5 MEJORADO - Sky Palace
+        5: { 
+            nombre: "Sky Palace", 
+            colorFondo: "#FFE4E1", 
+            colorColina1: "#D8BFD8", 
+            colorColina2: "#E6E6FA",
+            colorSuelo1: "#F0F8FF", 
+            colorSuelo2: "#E0FFFF",
+            colorObstaculos: "#8B4513",
+            colorParticulas: "#FFB6C1",
+            texturaSuelo: "clouds",
+            dificultad: 0.9
+        },
+        // NIVEL 6 MEJORADO - Desert Ruins
+        6: { 
+            nombre: "Desert Ruins", 
+            colorFondo: "#FFEBCD", 
+            colorColina1: "#DEB887", 
+            colorColina2: "#D2B48C",
+            colorSuelo1: "#F4A460", 
+            colorSuelo2: "#D2691E",
+            colorObstaculos: "#8B4513",
+            colorParticulas: "#FFD700",
+            texturaSuelo: "sand",
+            dificultad: 0.6
+        },
+        // NIVEL 7 MEJORADO - Crystal Cave
+        7: { 
+            nombre: "Crystal Cave", 
+            colorFondo: "#F0F8FF", 
+            colorColina1: "#E6E6FA", 
+            colorColina2: "#D8BFD8",
+            colorSuelo1: "#B0C4DE", 
+            colorSuelo2: "#87CEEB",
+            colorObstaculos: "#ff4500",
+            colorParticulas: "#AFEEEE",
+            texturaSuelo: "crystal",
+            dificultad: 0.8
+        },
+        8: { 
+            nombre: "Volcano Core", 
+            colorFondo: "#2f4f4f",
+            colorColina1: "#000000",
+            colorColina2: "#1a1a1a",
+            colorSuelo1: "#87CEEB",
+            colorSuelo2: "#1a1a1a",
+            colorObstaculos: "#0045FF",
+            colorParticulas: "#FF6347",
+            texturaSuelo: "lava",
+            dificultad: 0.7
+        }
+    };
+    
+    // COLOR DEL PERSONAJE: Cambiado a Rojo por defecto para resaltar en Nivel 1 y 2.
+    let selectedColor = "#e74c3c"; 
+    const availableColors = [
+        { name: "AZUL", hex: "#3366cc" }, 
+        { name: "ROJO", hex: "#FF0000" }, 
+        { name: "AMARILLO", hex: "#f1c40f" }, 
+        { name: "VERDE", hex: "#50C878" }, 
+        { name: "PURPURA", hex: "#9b59b6" }, 
+        { name: "NEGRO", hex: "#34495e" } 
+    ];
+
+    // Sonidos del juego
+    const jumpSound = new Audio("sounds/jump.wav");
+    const coinSound = new Audio("sounds/coin.wav");
+    const birdSound = new Audio("sounds/bird.wav");
+    const deathSound = new Audio("sounds/death.wav");
+    const levelUpSound = new Audio("sounds/level_up.wav");
+    
+    // Música de fondo - ahora con 3 opciones
+    const backgroundMusic1 = new Audio("sounds/game_music.mp3");
+    const backgroundMusic2 = new Audio("sounds/game_music2.mp3");
+    const backgroundMusic3 = new Audio("sounds/game_music3.mp3");
+    
+    let backgroundMusic = backgroundMusic1; // Música actual
+    backgroundMusic.loop = true;
+    
+    // Música del final
+    const finalMusic = new Audio("sounds/final_del_proyecto.mp3");
+
+    // Variables de control de sonido separadas
+    let musicVolume = 0.5; // Volumen de música por defecto (50%)
+    let sfxVolume = 0.5;   // Volumen de efectos por defecto (50%)
+    let currentMusic = 1; // Música actual (1, 2 o 3)
+
+    let birdSoundTimeout = null;
+    let frame = 0, score = 0, distance = 0, lastBonus = -1;
+    let gamePaused = false, startTime = Date.now();
+    let deathCount = 0;
+    let maxScore = parseInt(localStorage.getItem("maxScore") || 0);
+    
+    // NUEVAS VARIABLES PARA MEJORAS
+    let comboCount = 0;
+    let comboTimeout = null;
+
+    // Variables para la animación del final
+    let gameEnded = false;
+    let endFrameCount = 0;
+    let transitionOpacity = 0;
+    let finalMessageShown = false;
+    
+    // NUEVAS VARIABLES PARA LOS BOTONES AÑADIDOS
+    let speedMultiplier = 1;
+    let speedEffectTimer = 0;
+
+    // SISTEMA DE LOGROS ACTUALIZADO
+    const achievements = {
+        firstJump: { unlocked: false, name: "¡Primer Salto!", desc: "Realiza tu primer salto" },
+        firstCoin: { unlocked: false, name: "Coleccionista", desc: "Recoge tu primera moneda" },
+        firstDeath: { unlocked: false, name: "Aprendiendo", desc: "Muere por primera vez" },
+        distance500: { unlocked: false, name: "Corredor Novato", desc: "Alcanza 500m" },
+        distance1000: { unlocked: false, name: "Corredor Experto", desc: "Alcanza 1000m" },
+        distance2000: { unlocked: false, name: "Corredor Máster", desc: "Alcanza 2000m" },
+        coinMaster: { unlocked: false, name: "Rico", desc: "Consigue 50 monedas" },
+        comboKing: { unlocked: false, name: "Combo King", desc: "Consigue un combo de 10" },
+        shieldUser: { unlocked: false, name: "Protegido", desc: "Usa un escudo por primera vez" },
+        magnetUser: { unlocked: false, name: "Atracción", desc: "Usa un imán por primera vez" },
+        speedRunner: { unlocked: false, name: "Velocista", desc: "Usa la velocidad máxima" },
+        level2Complete: { unlocked: false, name: "Superviviente", desc: "Completa el Nivel 2" },
+        // NUEVOS LOGROS PARA LOS NUEVOS NIVELES
+        desertExplorer: { unlocked: false, name: "Explorador del Desierto", desc: "Juega en el nivel Desert Ruins" },
+        crystalCollector: { unlocked: false, name: "Coleccionista de Cristales", desc: "Juega en el nivel Crystal Cave" },
+        volcanoMaster: { unlocked: false, name: "Maestro del Volcán", desc: "Juega en el nivel Volcano Core" },
+        levelCompletionist: { unlocked: false, name: "Completista", desc: "Completa cualquier nivel" }
+    };
+
+    const sonic = {
+      x: 60, y: 360, width: 40, height: 40,
+      dy: 0, gravity: 0.6, jumpPower: -12,
+      grounded: true, coins: 0, color: selectedColor,
+      hasShield: false, shieldTimer: 0,
+      hasMagnet: false, magnetTimer: 0,
+      scoreMultiplier: 1,
+      reviveInvulnTimer: 0,
+      reviveActive: false
+    };
+
+    let obstacles = [], birds = [], coins = [], blobs = [], ramps = [];
+    let particleEffects = [];
+
+    // NUEVAS VARIABLES PARA EFECTOS VISUALES
+    let scorePopups = [];
+    let groundDusts = [];
+
+    const birdImage = new Image(); birdImage.src = "assets/bird.png";
+    const coinImg = new Image(); coinImg.src = "assets/coin.png";
+    const goldCoinImg = new Image(); goldCoinImg.src = "assets/gold_coin.png";
+    const shieldImg = new Image(); shieldImg.src = "assets/shield.png";
+    const magnetImg = new Image(); magnetImg.src = "assets/magnet.png";
+
+    // FUNCIONES PARA SISTEMA DE NIVELES ACTUALIZADO
+    function getMetaNivelActual() {
+      return nivelMetas[nivelActual] || nivelMetas[1];
+    }
+
+    function actualizarIndicadorNivel() {
+      const meta = getMetaNivelActual();
+      const config = nivelConfig[nivelActual];
+      const midPoint = Math.floor(meta / 2);
+      levelIndicator.textContent = `NIVEL ${nivelActual}: ${config.nombre} - ${Math.floor(distance)}/${meta}m`;
+      levelIndicator.style.background = nivelActual <= 5 ? 'rgba(0,0,0,0.7)' : 'rgba(139, 0, 139, 0.8)';
+      levelIndicator.style.borderColor = nivelActual <= 5 ? 'gold' : '#9370db';
+      
+      midLabel.textContent = `${midPoint}m`;
+      endLabel.textContent = `${meta}m`;
+    }
+
+    function cambiarANivel(nuevoNivel) {
+      if (nivelActual === nuevoNivel) return;
+      
+      nivelActual = nuevoNivel;
+      distance = 0;
+      lastBonus = -1;
+      
+      const config = nivelConfig[nivelActual];
+      createScorePopup(canvas.width/2, canvas.height/2, `¡${config.nombre} INICIADO!`, nuevoNivel <= 5 ? "gold" : "#9370db");
+      levelUpSound.currentTime = 0;
+      levelUpSound.play();
+      
+      obstacles = [];
+      birds = [];
+      coins = [];
+      blobs = [];
+      ramps = [];
+      
+      actualizarIndicadorNivel();
+      
+      // Desbloquear logro si es el nivel 2
+      if (nuevoNivel === 2 && !achievements.level2Complete.unlocked) {
+        unlockAchievement('level2Complete');
+      }
+
+      // Desbloquear logros para nuevos niveles
+      if (nuevoNivel === 6 && !achievements.desertExplorer.unlocked) {
+        unlockAchievement('desertExplorer');
+      }
+      if (nuevoNivel === 7 && !achievements.crystalCollector.unlocked) {
+        unlockAchievement('crystalCollector');
+      }
+      if (nuevoNivel === 8 && !achievements.volcanoMaster.unlocked) {
+        unlockAchievement('volcanoMaster');
+      }
+
+      document.querySelectorAll('.level-btn').forEach(btn => {
+          btn.classList.remove('selected');
+          if (parseInt(btn.dataset.level) === nuevoNivel) {
+              btn.classList.add('selected');
+          }
+      });
+    }
+
+    function getFrecuenciaObstaculos() {
+      const config = nivelConfig[nivelActual];
+      const baseFreq = 100 / config.dificultad;
+      return Math.floor(baseFreq / speedMultiplier);
+    }
+
+    function getFrecuenciaMonedas() {
+      const config = nivelConfig[nivelActual];
+      const baseFreq = 180 / config.dificultad;
+      return Math.floor(baseFreq / speedMultiplier);
+    }
+
+    function getFrecuenciaPowerUps() {
+      const config = nivelConfig[nivelActual];
+      const baseRate = 0.1;
+      return baseRate * config.dificultad;
+    }
+
+    // FUNCIÓN PARA REINICIAR LOGROS
+    function resetAchievements() {
+      const confirmed = confirm("¿Estás seguro de que quieres reiniciar todos tus logros? Esta acción no se puede rehacer.");
+      
+      if (confirmed) {
+        Object.keys(achievements).forEach(key => {
+          achievements[key].unlocked = false;
+        });
+        
+        localStorage.removeItem('sonicAchievements');
+        createScorePopup(canvas.width/2, canvas.height/2, "LOGROS REINICIADOS", "#ff5722");
+        loadAchievements();
+      }
+    }
+
+    // FUNCIONES PARA CONTROL DE SONIDO SEPARADO
+    function toggleMusicControls() {
+      musicControls.classList.toggle('show');
+      // Cerrar controles de SFX si están abiertos
+      if (sfxControls.classList.contains('show')) {
+        sfxControls.classList.remove('show');
+      }
+    }
+
+    function toggleSfxControls() {
+      sfxControls.classList.toggle('show');
+      // Cerrar controles de música si están abiertos
+      if (musicControls.classList.contains('show')) {
+        musicControls.classList.remove('show');
+      }
+    }
+
+    function updateMusicVolume() {
+      musicVolume = musicVolumeSlider.value / 100;
+      currentMusicVolume.textContent = `Volumen Música: ${musicVolumeSlider.value}%`;
+      
+      backgroundMusic.volume = musicVolume;
+      finalMusic.volume = musicVolume;
+      
+      saveSoundSettings();
+    }
+
+    function updateSfxVolume() {
+      sfxVolume = sfxVolumeSlider.value / 100;
+      currentSfxVolume.textContent = `Volumen Efectos: ${sfxVolumeSlider.value}%`;
+      
+      jumpSound.volume = sfxVolume;
+      coinSound.volume = sfxVolume;
+      birdSound.volume = sfxVolume;
+      deathSound.volume = sfxVolume;
+      levelUpSound.volume = sfxVolume;
+      
+      saveSoundSettings();
+    }
+
+    function changeMusic(musicNumber) {
+      backgroundMusic.pause();
+      backgroundMusic.currentTime = 0;
+      
+      document.querySelectorAll('.music-selector button').forEach(btn => btn.classList.remove('active'));
+
+      if (musicNumber === 1) {
+        backgroundMusic = backgroundMusic1;
+        music1Btn.classList.add('active');
+      } else if (musicNumber === 2) {
+        backgroundMusic = backgroundMusic2;
+        music2Btn.classList.add('active');
+      } else if (musicNumber === 3) {
+        backgroundMusic = backgroundMusic3;
+        music3Btn.classList.add('active');
+      }
+      
+      currentMusic = musicNumber;
+      
+      backgroundMusic.loop = true;
+      backgroundMusic.volume = musicVolume;
+      
+      if (!gamePaused && !gameEnded) {
+        backgroundMusic.play().catch(e => console.error("No se pudo iniciar la música:", e));
+      }
+      
+      saveSoundSettings();
+    }
+
+    function saveSoundSettings() {
+      const soundSettings = {
+        musicVolume: musicVolume,
+        sfxVolume: sfxVolume,
+        music: currentMusic
+      };
+      localStorage.setItem('sonicSoundSettings', JSON.stringify(soundSettings));
+    }
+
+    function loadSoundSettings() {
+      const saved = localStorage.getItem('sonicSoundSettings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        musicVolume = settings.musicVolume || 0.5;
+        sfxVolume = settings.sfxVolume || 0.5;
+        currentMusic = settings.music || 1;
+        
+        musicVolumeSlider.value = musicVolume * 100;
+        sfxVolumeSlider.value = sfxVolume * 100;
+        currentMusicVolume.textContent = `Volumen Música: ${musicVolumeSlider.value}%`;
+        currentSfxVolume.textContent = `Volumen Efectos: ${sfxVolumeSlider.value}%`;
+        changeMusic(currentMusic);
+        updateMusicVolume();
+        updateSfxVolume();
+      }
+    }
+
+    // FUNCIONES DEL MENÚ DE OPCIONES
+    function toggleOptionsMenu(show) {
+        if (show) {
+            gamePaused = true;
+            backgroundMusic.pause();
+            optionsMenu.classList.add('show');
+        } else {
+            optionsMenu.classList.remove('show');
+            gamePaused = false;
+            backgroundMusic.play().catch(e => console.error("No se pudo reanudar la música:", e));
+            requestAnimationFrame(update);
+        }
+    }
+
+    function setupColorSelector() {
+        colorSelector.innerHTML = '';
+        availableColors.forEach(color => {
+            const div = document.createElement('div');
+            div.className = 'color-option';
+            div.style.backgroundColor = color.hex;
+            div.dataset.color = color.hex;
+            div.title = color.name;
+
+            if (selectedColor === color.hex) {
+                div.classList.add('selected');
+            }
+
+            div.onclick = () => {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedColor = color.hex;
+                sonic.color = selectedColor;
+                localStorage.setItem('sonicColor', selectedColor);
+            };
+            colorSelector.appendChild(div);
+        });
+    }
+
+    function loadCharacterColor() {
+        const savedColor = localStorage.getItem('sonicColor');
+        if (savedColor) {
+            selectedColor = savedColor;
+            sonic.color = savedColor;
+        }
+    }
+
+    function setupLevelSelector() {
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            const level = parseInt(btn.dataset.level);
+            if (level === nivelActual) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+
+            btn.onclick = () => {
+                cambiarANivel(level);
+                toggleOptionsMenu(false); 
+            };
+        });
+    }
+
+    // FUNCIONES DEL SISTEMA DE LOGROS
+    function unlockAchievement(achievementKey) {
+        if (!achievements[achievementKey] || achievements[achievementKey].unlocked) return;
+        
+        achievements[achievementKey].unlocked = true;
+        
+        const achievement = achievements[achievementKey];
+        const popup = document.createElement('div');
+        popup.className = 'achievement-popup';
+        popup.innerHTML = `
+            <div class="achievement-icon">🏆</div>
+            <h3>${achievement.name}</h3>
+            <p>${achievement.desc}</p>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        setTimeout(() => popup.classList.add('show'), 100);
+        
+        setTimeout(() => {
+            popup.classList.remove('show');
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, 500);
+        }, 4000);
+        
+        saveAchievements();
+    }
+
+    function saveAchievements() {
+        const saved = {};
+        Object.keys(achievements).forEach(key => {
+            saved[key] = achievements[key].unlocked;
+        });
+        localStorage.setItem('sonicAchievements', JSON.stringify(saved));
+    }
+
+    function loadAchievements() {
+        const saved = localStorage.getItem('sonicAchievements');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            Object.keys(parsed).forEach(key => {
+                if (achievements[key]) {
+                    achievements[key].unlocked = parsed[key];
+                }
+            });
+        }
+    }
+
+    function showAchievementsMenu() {
+      gamePaused = true;
+      backgroundMusic.pause();
+      
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          color: white;
+          font-family: 'Press Start 2P', cursive;
+      `;
+      
+      let html = `<h2>🏆 LOGROS DESBLOQUEADOS</h2><div style="max-height: 60vh; overflow-y: auto; text-align: center;">`;
+      
+      Object.keys(achievements).forEach(key => {
+          const achievement = achievements[key];
+          html += `
+              <div style="margin: 15px; padding: 15px; border: 2px solid ${achievement.unlocked ? 'gold' : '#333'}; border-radius: 10px; background: ${achievement.unlocked ? 'rgba(255,215,0,0.1)' : 'rgba(0,0,0,0.5)'};">
+                  <h3 style="color: ${achievement.unlocked ? 'gold' : '#666'}; margin: 0 0 10px 0;">${achievement.unlocked ? '✅' : '🔒'} ${achievement.name}</h3>
+                  <p style="color: ${achievement.unlocked ? '#ccc' : '#555'}; margin: 0; font-size: 10px;">${achievement.desc}</p>
+              </div>
+          `;
+      });
+      
+      html += `</div>`;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.textContent = "CERRAR";
+      closeBtn.style.cssText = `
+          margin-top: 20px;
+          font-family: 'Press Start 2P', cursive;
+          padding: 10px 20px;
+          background: #2196f3;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+      `;
+      closeBtn.onclick = () => {
+          document.body.removeChild(overlay);
+          gamePaused = false;
+          backgroundMusic.play().catch(e => console.error("No se pudo reanudar la música:", e));
+          requestAnimationFrame(update);
+      };
+      
+      overlay.innerHTML = html;
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+    }
+
+    // EVENT LISTENERS
+    document.addEventListener("pointerdown", jump);
+    document.addEventListener("keydown", e => e.code === "Space" && jump());
+
+    document.addEventListener("click", () => {
+        if (backgroundMusic.paused && !gamePaused && !gameEnded) {
+            backgroundMusic.play().catch(e => console.error("No se pudo iniciar la música:", e));
+        }
+    }, { once: true }); 
+
+    pauseBtn.onclick = () => {
+      gamePaused = !gamePaused;
+      pauseBtn.textContent = gamePaused ? "▶️ Reanudar" : "⏸️ Pausa";
+      gameStatus.textContent = "PAUSA";
+      gameStatus.style.display = gamePaused ? "block" : "none";
+      if (gamePaused) {
+        backgroundMusic.pause(); 
+      } else {
+        backgroundMusic.play().catch(e => console.error("No se pudo reanudar la música:", e)); 
+        requestAnimationFrame(update);
+      }
+    };
+
+    // CORRECCIÓN DEL BOTÓN REINICIAR - FUNCIONA CORRECTAMENTE AHORA
+    restartBtn.onclick = () => {
+      // Detener cualquier animación en curso
+      cancelAnimationFrame(animationFrameId);
+      
+      // Reiniciar todas las variables del juego
+      updateMaxScore();
+      gamePaused = false;
+      gameEnded = false;
+      endFrameCount = 0;
+      transitionOpacity = 0;
+      finalMessageShown = false;
+      speedMultiplier = 1;
+      nivelActual = 1;
+      speedBtn.textContent = "🚀 Velocidad 1x";
+      pauseBtn.textContent = "⏸️ Pausa";
+      gameStatus.style.display = "none";
+      finalMessage.style.display = "none";
+      continueBtn.style.display = "none";
+      
+      // Detener y reiniciar música
+      finalMusic.pause();
+      finalMusic.currentTime = 0;
+      backgroundMusic.currentTime = 0;
+      
+      // Reiniciar el juego completamente
+      resetGame();
+      
+      // Iniciar música de fondo
+      backgroundMusic.play().catch(e => console.error("No se pudo iniciar la música:", e));
+    };
+
+    let animationFrameId;
+
+    speedBtn.onclick = () => {
+      speedMultiplier = (speedMultiplier % 3) + 1;
+      speedBtn.textContent = `🚀 Velocidad ${speedMultiplier}x`;
+      
+      speedEffect.classList.add("active");
+      speedEffectTimer = 30;
+      
+      if (speedMultiplier === 3 && !achievements.speedRunner.unlocked) {
+        unlockAchievement('speedRunner');
+      }
+    };
+
+    skipToEndBtn.onclick = () => {
+      if (!gameEnded) {
+        const meta = getMetaNivelActual();
+        distance = meta - 1;
+        createScorePopup(canvas.width/2, canvas.height/2, "¡SALTANDO AL FINAL!", "purple");
+      }
+    };
+
+    achievementsBtn.onclick = showAchievementsMenu;
+
+    // EVENT LISTENERS PARA LOS NUEVOS CONTROLES DE SONIDO
+    musicBtn.onclick = toggleMusicControls;
+    sfxBtn.onclick = toggleSfxControls;
+    closeMusicBtn.onclick = toggleMusicControls;
+    closeSfxBtn.onclick = toggleSfxControls;
+    musicVolumeSlider.addEventListener('input', updateMusicVolume);
+    sfxVolumeSlider.addEventListener('input', updateSfxVolume);
+    music1Btn.onclick = () => changeMusic(1);
+    music2Btn.onclick = () => changeMusic(2);
+    music3Btn.onclick = () => changeMusic(3);
+
+    resetAchievementsBtn.onclick = resetAchievements;
+
+    optionsMenuBtn.onclick = () => {
+        setupColorSelector();
+        setupLevelSelector();
+        toggleOptionsMenu(true);
+    };
+    closeOptionsBtn.onclick = () => toggleOptionsMenu(false);
+
+    function updateMaxScore() {
+      maxScore = Math.max(score, maxScore);
+      localStorage.setItem("maxScore", maxScore);
+    }
+
+    function resetGame() {
+      score = 0;
+      distance = 0;
+      sonic.coins = 0;
+      sonic.y = 360;
+      sonic.dy = 0;
+      sonic.grounded = true;
+      sonic.hasShield = false;
+      sonic.hasMagnet = false;
+      sonic.scoreMultiplier = 1;
+      sonic.reviveActive = false;
+      sonic.x = 60; 
+      deathCount = 0;
+      frame = 0;
+      obstacles = [];
+      birds = [];
+      coins = [];
+      blobs = [];
+      ramps = [];
+      particleEffects = [];
+      scorePopups = [];
+      groundDusts = [];
+      comboCount = 0;
+      updateComboIndicator();
+      actualizarIndicadorNivel();
+      startTime = Date.now();
+      
+      // Asegurarse de que el bucle del juego se reinicie
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      animationFrameId = requestAnimationFrame(update);
+    }
+
+    // NUEVAS FUNCIONES PARA MEJORAS
+    function createScorePopup(x, y, text, color = "gold") {
+      scorePopups.push({
+        x: x,
+        y: y,
+        text: text,
+        color: color,
+        life: 60,
+        vy: -2
+      });
+    }
+
+    function updateScorePopups() {
+      for (let i = scorePopups.length - 1; i >= 0; i--) {
+        const popup = scorePopups[i];
+        popup.y += popup.vy;
+        popup.vy *= 0.95;
+        popup.life--;
+        
+        if (popup.life <= 0) {
+          scorePopups.splice(i, 1);
+        }
+      }
+    }
+
+    function drawScorePopups() {
+      scorePopups.forEach(popup => {
+        ctx.fillStyle = popup.color;
+        ctx.font = "bold 14px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText(popup.text, popup.x, popup.y);
+        ctx.textAlign = "left";
+      });
+    }
+
+    function createGroundDust(x, y) {
+      for (let i = 0; i < 5; i++) {
+        groundDusts.push({
+          x: x + (Math.random() - 0.5) * 20,
+          y: y,
+          size: Math.random() * 4 + 2,
+          life: 30,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -Math.random() * 2
+        });
+      }
+    }
+
+    function updateGroundDust() {
+      for (let i = groundDusts.length - 1; i >= 0; i--) {
+        const dust = groundDusts[i];
+        dust.x += dust.vx;
+        dust.y += dust.vy;
+        dust.vy += 0.1;
+        dust.life--;
+        
+        if (dust.life <= 0) {
+          groundDusts.splice(i, 1);
+        }
+      }
+    }
+
+    function drawGroundDust() {
+      groundDusts.forEach(dust => {
+        const alpha = dust.life / 30;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(dust.x, dust.y, dust.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function updateComboIndicator() {
+      if (comboCount > 0) {
+        comboMultiplier.textContent = comboCount;
+        comboIndicator.style.display = "block";
+        comboIndicator.style.color = comboCount > 5 ? "gold" : "limegreen";
+      } else {
+        comboIndicator.style.display = "none";
+      }
+    }
+
+    function addCombo() {
+      comboCount++;
+      
+      if (comboCount >= 10 && !achievements.comboKing.unlocked) {
+        unlockAchievement('comboKing');
+      }
+      
+      clearTimeout(comboTimeout);
+      comboTimeout = setTimeout(() => {
+        if (comboCount >= 3) {
+          const bonus = comboCount * 5;
+          score += bonus;
+          createScorePopup(sonic.x, sonic.y - 50, `COMBO +${bonus}!`, "gold");
+        }
+        comboCount = 0;
+        updateComboIndicator();
+      }, 2000);
+    }
+
+    function updatePowerupIndicators() {
+      shieldIndicator.classList.toggle("active", sonic.hasShield);
+      magnetIndicator.classList.toggle("active", sonic.hasMagnet);
+      invincibleIndicator.classList.toggle("active", sonic.reviveActive);
+    }
+
+    function jump() {
+      if (!achievements.firstJump.unlocked) {
+        unlockAchievement('firstJump');
+      }
+      
+      if (sonic.grounded && !gamePaused) {
+        jumpSound.currentTime = 0;
+        jumpSound.play();
+        sonic.dy = sonic.jumpPower;
+        sonic.grounded = false;
+        for (let i = 0; i < 10; i++) {
+          createParticle(sonic.x + sonic.width / 2, sonic.y + sonic.height, "white");
+        }
+      }
+    }
+    
+    function createParticle(x, y, color) {
+      const config = nivelConfig[nivelActual];
+      const particleColor = color || config.colorParticulas || "white";
+      
+      particleEffects.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 1) * 3,
+          size: Math.random() * 3 + 1,
+          life: 30,
+          color: particleColor
+      });
+    }
+
+    function updateParticles() {
+      for (let i = particleEffects.length - 1; i >= 0; i--) {
+          const p = particleEffects[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.2;
+          p.size *= 0.95;
+          p.life--;
+          if (p.life <= 0) {
+              particleEffects.splice(i, 1);
+          }
+      }
+    }
+    
+    function drawParticles() {
+      particleEffects.forEach(p => {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+      });
+    }
+
+    // FUNCIONES MEJORADAS DE DIBUJO PARA NIVELES 3-7
+    function drawBackground() {
+        const config = nivelConfig[nivelActual];
+        
+        // Fondo base
+        ctx.fillStyle = config.colorFondo;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Fondos especiales para niveles 3-7
+        switch(nivelActual) {
+            case 3: // Ice Mountain - Montañas nevadas
+                drawIceMountainBackground();
+                break;
+            case 4: // Dark Forest - Bosque denso
+                drawForestBackground();
+                break;
+            case 5: // Sky Palace - Nubes y palacios
+                drawSkyBackground();
+                break;
+            case 6: // Desert Ruins - Dunas de arena
+                drawDesertBackground();
+                break;
+            case 7: // Crystal Cave - Cristales brillantes
+                drawCrystalBackground();
+                break;
+            default:
+                // Fondos por defecto para niveles 1, 2, 8
+                drawDefaultBackground();
+        }
+    }
+
+    // NUEVAS FUNCIONES PARA FONDOS ESPECIALES
+    function drawIceMountainBackground() {
+        const config = nivelConfig[3];
+        
+        // Montañas nevadas
+        ctx.fillStyle = config.colorColina1;
+        ctx.beginPath();
+        ctx.moveTo(0, 250);
+        ctx.lineTo(150, 150);
+        ctx.lineTo(300, 250);
+        ctx.lineTo(450, 120);
+        ctx.lineTo(600, 250);
+        ctx.lineTo(800, 180);
+        ctx.lineTo(800, 400);
+        ctx.lineTo(0, 400);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Nieve en las montañas
+        ctx.fillStyle = "#FFFFFF";
+        ctx.beginPath();
+        ctx.moveTo(140, 150);
+        ctx.lineTo(160, 130);
+        ctx.lineTo(180, 150);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(440, 120);
+        ctx.lineTo(460, 100);
+        ctx.lineTo(480, 120);
+        ctx.fill();
+        
+        // Efecto de brillo de hielo
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+        ctx.beginPath();
+        ctx.moveTo(100, 200);
+        ctx.lineTo(120, 190);
+        ctx.lineTo(140, 200);
+        ctx.fill();
+    }
+
+    function drawForestBackground() {
+        const config = nivelConfig[4];
+        
+        // Árboles de fondo
+        ctx.fillStyle = config.colorColina1;
+        for(let i = 0; i < 8; i++) {
+            const x = i * 120;
+            const height = 80 + Math.sin(i) * 20;
+            ctx.fillRect(x, 320 - height, 40, height);
+            
+            // Copa del árbol
+            ctx.beginPath();
+            ctx.arc(x + 20, 320 - height, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Efecto de luz entre árboles
+        ctx.fillStyle = "rgba(144, 238, 144, 0.1)";
+        ctx.beginPath();
+        ctx.arc(400, 150, 100, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawSkyBackground() {
+        const config = nivelConfig[5];
+        
+        // Nubes flotantes
+        ctx.fillStyle = "#FFFFFF";
+        drawCloud(100, 100, 60);
+        drawCloud(300, 150, 80);
+        drawCloud(500, 120, 70);
+        drawCloud(700, 180, 90);
+        
+        // Efecto de gradiente celestial
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, "#FFE4E1");
+        gradient.addColorStop(1, "#D8BFD8");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawCloud(x, y, size) {
+        ctx.beginPath();
+        ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.3, y - size * 0.1, size * 0.4, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.6, y, size * 0.3, 0, Math.PI * 2);
+        ctx.arc(x + size * 0.4, y + size * 0.1, size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawDesertBackground() {
+        const config = nivelConfig[6];
+        
+        // Dunas de arena
+        ctx.fillStyle = config.colorColina1;
+        ctx.beginPath();
+        ctx.moveTo(0, 280);
+        ctx.bezierCurveTo(200, 230, 400, 330, 800, 280);
+        ctx.lineTo(800, 400);
+        ctx.lineTo(0, 400);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Segunda duna
+        ctx.fillStyle = config.colorColina2;
+        ctx.beginPath();
+        ctx.moveTo(0, 320);
+        ctx.bezierCurveTo(150, 300, 350, 350, 800, 320);
+        ctx.lineTo(800, 400);
+        ctx.lineTo(0, 400);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Sol del desierto
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(700, 80, 40, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawCrystalBackground() {
+        const config = nivelConfig[7];
+        
+        // Cristales grandes de fondo
+        ctx.fillStyle = config.colorColina1;
+        drawCrystal(200, 250, 30, 80);
+        drawCrystal(400, 220, 25, 70);
+        drawCrystal(600, 280, 35, 90);
+        
+        // Efecto de brillo
+        ctx.fillStyle = "rgba(175, 238, 238, 0.2)";
+        ctx.beginPath();
+        ctx.arc(400, 200, 50, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawCrystal(x, y, width, height) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + height);
+        ctx.lineTo(x - width/2, y);
+        ctx.lineTo(x + width/2, y);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Reflejo
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.moveTo(x - width/4, y + height/2);
+        ctx.lineTo(x, y + height/4);
+        ctx.lineTo(x + width/4, y + height/2);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function drawDefaultBackground() {
+        const config = nivelConfig[nivelActual];
+        
+        // Colina 1
+        ctx.fillStyle = config.colorColina1;
+        ctx.beginPath();
+        ctx.moveTo(0, 200);
+        ctx.bezierCurveTo(200, 150, 400, 250, 800, 200);
+        ctx.lineTo(800, 400);
+        ctx.lineTo(0, 400);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Colina 2
+        ctx.fillStyle = config.colorColina2;
+        ctx.beginPath();
+        ctx.moveTo(0, 300);
+        ctx.bezierCurveTo(150, 250, 350, 350, 800, 300);
+        ctx.lineTo(800, 400);
+        ctx.lineTo(0, 400);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function drawGround() {
+        const config = nivelConfig[nivelActual];
+        const baseColor = config.colorSuelo1;
+        
+        // Dibujar base del suelo
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 360, canvas.width, 40);
+        
+        // Aplicar textura especial según el nivel
+        if (config.texturaSuelo) {
+            const patternCanvas = document.createElement('canvas');
+            const patternCtx = patternCanvas.getContext('2d');
+            patternCanvas.width = 100;
+            patternCanvas.height = 40;
+            
+            patternCtx.fillStyle = baseColor;
+            patternCtx.fillRect(0, 0, 100, 40);
+            
+            // Dibujar patrón según textura
+            switch(config.texturaSuelo) {
+                case 'ice':
+                    patternCtx.fillStyle = config.colorSuelo2;
+                    for(let i = 0; i < 10; i++) {
+                        patternCtx.fillRect(i * 10, 10, 3, 20);
+                    }
+                    break;
+                case 'forest':
+                    patternCtx.fillStyle = config.colorSuelo2;
+                    // Patrón de hojas
+                    for(let i = 0; i < 5; i++) {
+                        patternCtx.beginPath();
+                        patternCtx.arc(i * 20 + 10, 20, 8, 0, Math.PI * 2);
+                        patternCtx.fill();
+                    }
+                    break;
+                case 'clouds':
+                    patternCtx.fillStyle = config.colorSuelo2;
+                    patternCtx.fillRect(0, 15, 100, 10);
+                    patternCtx.fillRect(20, 25, 60, 8);
+                    break;
+                case 'sand':
+                    patternCtx.fillStyle = config.colorSuelo2;
+                    for(let i = 0; i < 20; i++) {
+                        patternCtx.fillRect(i * 5, 10 + Math.sin(i) * 5, 2, 2);
+                    }
+                    break;
+                case 'crystal':
+                    patternCtx.fillStyle = config.colorSuelo2;
+                    patternCtx.fillRect(10, 10, 20, 5);
+                    patternCtx.fillRect(40, 15, 15, 5);
+                    patternCtx.fillRect(70, 12, 18, 5);
+                    break;
+                case 'lava':
+                    patternCtx.fillStyle = '#FF4500';
+                    patternCtx.beginPath();
+                    patternCtx.arc(30, 20, 8, 0, Math.PI * 2);
+                    patternCtx.arc(60, 25, 6, 0, Math.PI * 2);
+                    patternCtx.arc(80, 18, 7, 0, Math.PI * 2);
+                    patternCtx.fill();
+                    break;
+            }
+            
+            const pattern = ctx.createPattern(patternCanvas, 'repeat');
+            ctx.fillStyle = pattern;
+            ctx.fillRect(0, 360, canvas.width, 40);
+        }
+        
+        // Línea de movimiento (efecto de velocidad)
+        const checkeredSize = 20;
+        const offset = (frame * 4 * speedMultiplier) % (checkeredSize * 2);
+        
+        for (let x = 0; x < canvas.width; x += checkeredSize) {
+            const rectX = x - offset;
+            ctx.fillStyle = (Math.floor(x / checkeredSize) % 2 === 0) ? 
+                           config.colorSuelo1 : config.colorSuelo2;
+            ctx.globalAlpha = 0.3;
+            ctx.fillRect(rectX, 380, checkeredSize, 20);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    function drawSonic() {
+      const centerX = sonic.x + sonic.width / 2;
+      const centerY = sonic.y + sonic.height / 2;
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      if (!sonic.grounded && !gameEnded) ctx.rotate((frame * 20) * Math.PI / 180);
+
+      if (sonic.hasShield) {
+        ctx.fillStyle = "gold";
+        ctx.beginPath();
+        ctx.arc(0, 0, sonic.width / 2 + 10, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (sonic.scoreMultiplier > 1) {
+        ctx.fillStyle = "limegreen";
+      } else if (sonic.reviveActive) {
+        ctx.fillStyle = "cyan";
+      } else {
+        ctx.fillStyle = sonic.color;
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(-6, -6, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.arc(-6, -6, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function spawnEnvironmentObjects(currentSpeed) {
+      const frecuenciaObstaculos = getFrecuenciaObstaculos();
+      
+      if (frame % frecuenciaObstaculos === 0) {
+        const rand = Math.random();
+        if (rand < 0.9) {
+          const types = [
+            () => ({ x: canvas.width, y: 360, width: 30, height: 40, shape: "triangle" }),
+            () => ({ x: canvas.width, y: 340, width: 40, height: 60, shape: "rect" }),
+            () => ({ x: canvas.width, y: 360, width: 60, height: 40, shape: "rect" }),
+            () => ({ x: canvas.width, y: 320, width: 30, height: 80, shape: "triangle" }),
+          ];
+          obstacles.push(types[Math.floor(Math.random() * types.length)]());
+        } else if (rand < 0.95) {
+          ramps.push({ x: canvas.width, y: 360, width: 80, height: 20 });
+        }
+      }
+      obstacles.forEach(o => o.x -= currentSpeed);
+      ramps.forEach(r => r.x -= currentSpeed);
+
+      obstacles = obstacles.filter(o => o.x + o.width > 0);
+      ramps = ramps.filter(r => r.x + r.width > 0);
+    }
+
+    function updateBirds(currentSpeed) {
+        if (score >= 50 && frame % Math.floor(250 / speedMultiplier) === 0) {
+            birds.push({ 
+                x: canvas.width, 
+                y: 260, 
+                width: 32, 
+                height: 32 
+            });
+            
+            birdSound.currentTime = 0;
+            birdSound.play();
+            clearTimeout(birdSoundTimeout);
+            birdSoundTimeout = setTimeout(() => {
+                birdSound.pause();
+                birdSound.currentTime = 0;
+            }, 3000);
+        }
+        
+        birds.forEach(bird => bird.x -= currentSpeed + 2);
+        birds = birds.filter(bird => bird.x + bird.width > 0);
+    }
+
+    function updateBlobs(currentSpeed) {
+      if (frame % Math.floor(300 / speedMultiplier) === 0) {
+        blobs.push({ x: canvas.width, y: 380, width: 20, height: 20 });
+      }
+      blobs.forEach(b => b.x -= currentSpeed * 0.7);
+      blobs = blobs.filter(b => b.x + b.width > 0);
+    }
+
+    function updateCoins(currentSpeed) {
+      const frecuenciaMonedas = getFrecuenciaMonedas();
+      const frecuenciaPowerUps = getFrecuenciaPowerUps();
+      
+      if (frame % frecuenciaMonedas === 0) {
+        const rand = Math.random();
+        if (rand < frecuenciaPowerUps) { 
+          coins.push({ x: canvas.width, y: 360, width: 20, height: 20, type: "shield" });
+        } else if (rand < frecuenciaPowerUps * 2) { 
+          coins.push({ x: canvas.width, y: 360, width: 20, height: 20, type: "magnet" });
+        } else {
+          const isGold = Math.random() < 0.25;
+          coins.push({
+            x: canvas.width,
+            y: 360,
+            width: 20,
+            height: 20,
+            value: isGold ? 5 : 1,
+            gold: isGold,
+            type: "coin"
+          });
+        }
+      }
+      
+      coins.forEach(coin => coin.x -= currentSpeed - 1);
+      coins = coins.filter(coin => coin.x + coin.width > 0);
+    }
+
+    function drawObjects(arr) {
+      arr.forEach(obj => {
+        if (obj.type === "coin") {
+          const img = obj.gold ? goldCoinImg : coinImg;
+          ctx.drawImage(img, obj.x, obj.y, 20, 20);
+        } else if (obj.type === "shield") {
+          ctx.drawImage(shieldImg, obj.x, obj.y, 20, 20);
+        } else if (obj.type === "magnet") {
+          ctx.drawImage(magnetImg, obj.x, obj.y, 20, 20);
+        }
+      });
+    }
+
+    function drawBlobs() {
+      const config = nivelConfig[nivelActual];
+      blobs.forEach(b => {
+        // *** MANTENIENDO LA MODIFICACIÓN DE LOS BLOBS ROJOS EN NIVEL 1 y 2 ***
+        let blobColor = config.colorObstaculos;
+        if (nivelActual === 1 || nivelActual === 2) {
+            blobColor = "#e74c3c"; // Color rojo (#e74c3c)
+        }
+        // *** EN NIVELES 3-8, USAN EL COLOR DE OBSTÁCULO AJUSTADO PARA CONTRASTE ***
+        ctx.fillStyle = blobColor;
+        ctx.beginPath();
+        ctx.arc(b.x + b.width / 2, b.y + b.height / 2, b.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+        
+    function drawRamps() {
+      // Ajuste para la rampa de la imagen 1: es de color naranja
+      const rampColor = (nivelActual === 1) ? "orange" : "orange"; 
+
+      ramps.forEach(r => {
+        ctx.fillStyle = rampColor;
+        ctx.beginPath();
+        ctx.moveTo(r.x, r.y + r.height);
+        ctx.lineTo(r.x + r.width, r.y + r.height);
+        ctx.lineTo(r.x + r.width, r.y);
+        ctx.closePath();
+        ctx.fill();
+      });
+    }
+
+    function drawObstacles() {
+      const config = nivelConfig[nivelActual];
+      obstacles.forEach(obj => {
+        // En la segunda imagen, el obstáculo es un cuadrado simple de color verde oscuro
+        if (nivelActual === 2 && obj.shape === "rect" && obj.width === 40 && obj.height === 60) {
+             ctx.fillStyle = config.colorObstaculos;
+             ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+        } 
+        // Triángulo de la primera imagen
+        else if (nivelActual === 1 && (obj.shape === "triangle" || (obj.shape === "rect" && obj.height === 40))) {
+            ctx.fillStyle = config.colorObstaculos;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            ctx.fillStyle = config.colorSuelo2;
+            ctx.fillRect(obj.x, obj.y + obj.height - 5, obj.width, 5);
+        }
+        // Rectángulos por defecto para otros niveles (o el cuadrado de la segunda imagen)
+        else {
+            ctx.fillStyle = config.colorObstaculos;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            ctx.fillStyle = config.colorSuelo2;
+            ctx.fillRect(obj.x, obj.y + obj.height - 5, obj.width, 5);
+        }
+      });
+    }
+
+
+    function checkCollision() {
+      const enemies = obstacles.concat(birds).concat(blobs);
+      for (let e of enemies) {
+        if (isColliding(sonic, e)) {
+          if (sonic.hasShield || sonic.reviveActive) {
+            sonic.hasShield = false; 
+            for (let i = 0; i < 20; i++) {
+              createParticle(sonic.x + sonic.width / 2, sonic.y + sonic.height / 2, "gold");
+            }
+            if (obstacles.includes(e)) {
+                obstacles.splice(obstacles.indexOf(e), 1);
+            } else if (birds.includes(e)) {
+                birds.splice(birds.indexOf(e), 1);
+            } else if (blobs.includes(e)) {
+                blobs.splice(blobs.indexOf(e), 1);
+            }
+            return;
+          }
+          if (score >= 2) {
+            if (!achievements.firstDeath.unlocked) {
+              unlockAchievement('firstDeath');
+            }
+            return loseLife();
+          }
+          gameOver(); return;
+        }
+      }
+      
+      coins.forEach((c, i) => {
+        if (sonic.hasMagnet && c.type === "coin") {
+          const dx = sonic.x - c.x;
+          if (Math.abs(dx) < 100) c.x += dx * 0.05;
+        }
+
+        if (isColliding(sonic, c)) {
+          if (c.type === "coin") {
+            coinSound.currentTime = 0;
+            coinSound.play();
+            sonic.coins += c.value * sonic.scoreMultiplier;
+            score += c.value * sonic.scoreMultiplier;
+            
+            if (!achievements.firstCoin.unlocked) {
+              unlockAchievement('firstCoin');
+            }
+            
+            if (sonic.coins >= 50 && !achievements.coinMaster.unlocked) {
+              unlockAchievement('coinMaster');
+            }
+            
+            createScorePopup(c.x + c.width/2, c.y, `+${c.value * sonic.scoreMultiplier}`);
+            addCombo();
+            
+            for (let i = 0; i < 5; i++) {
+              createParticle(c.x + c.width / 2, c.y + c.height / 2, c.gold ? "gold" : "silver");
+            }
+          } else if (c.type === "shield") {
+            sonic.hasShield = true;
+            sonic.shieldTimer = frame;
+            if (!achievements.shieldUser.unlocked) {
+              unlockAchievement('shieldUser');
+            }
+            createScorePopup(c.x + c.width/2, c.y, "ESCUDO!", "cyan");
+              } else if (c.type === "magnet") {
+            sonic.hasMagnet = true;
+            sonic.magnetTimer = frame;
+            sonic.scoreMultiplier = 4;
+            if (!achievements.magnetUser.unlocked) {
+              unlockAchievement('magnetUser');
+            }
+            createScorePopup(c.x + c.width/2, c.y, "IMÁN x4!", "limegreen");
+          }
+          coins.splice(i, 1);
+        }
+      });
+
+      ramps.forEach((r, i) => {
+        if (isColliding(sonic, r) && !sonic.grounded) {
+          score += 50;
+          sonic.dy = sonic.jumpPower * 1.5;
+          createScorePopup(r.x + r.width/2, r.y, "+50 RAMP!", "orange");
+          ramps.splice(i, 1);
+        }
+      });
+    }
+
+    function isColliding(a, b) {
+      return a.x < b.x + b.width &&
+             a.x + a.width > b.x &&
+             a.y < b.y + b.height &&
+             a.y + a.height > b.y;
+    }
+
+    function loseLife() {
+      deathSound.currentTime = 0;
+      deathSound.play();
+      backgroundMusic.pause();
+      gamePaused = true;
+      deathCount++;
+      comboCount = 0;
+      updateComboIndicator();
+      continueBtn.style.display = "block";
+      continueBtn.onclick = () => {
+        continueBtn.style.display = "none";
+        gamePaused = false;
+        score = Math.max(0, score - 2);
+        sonic.reviveActive = true;
+        sonic.reviveInvulnTimer = frame;
+        backgroundMusic.play().catch(e => console.error("No se pudo reanudar la música:", e));
+        requestAnimationFrame(update);
+      };
+    }
+
+    function gameOver() {
+      updateMaxScore();
+      backgroundMusic.pause();
+      gameStatus.innerHTML = `💥 ¡Game Over!<br>Puntos: ${score}<br>Récord: ${maxScore}<br>Nivel: ${nivelActual}`;
+      gameStatus.style.display = "block";
+      gamePaused = true;
+      comboCount = 0;
+      updateComboIndicator();
+    }
+
+    function startEnding() {
+      gameEnded = true;
+      gamePaused = true;
+      backgroundMusic.pause();
+      finalMusic.currentTime = 0;
+      finalMusic.play();
+      pauseBtn.style.display = "none";
+      restartBtn.style.display = "block";
+      gameStatus.style.display = "none";
+      finalMessage.style.display = "none";
+      
+      // Desbloquear logro por completar un nivel
+      if (!achievements.levelCompletionist.unlocked) {
+        unlockAchievement('levelCompletionist');
+      }
+      
+      drawEnding();
+    }
+
+    function drawEnding() {
+      if (endFrameCount === 0) {
+        sonic.y = 360;
+        sonic.dy = 0;
+      }
+      
+      sonic.x += 6;
+      
+      drawBackground();
+      drawGround();
+      drawSonic();
+
+      if (transitionOpacity < 1) {
+          transitionOpacity += 0.005;
+      }
+      ctx.fillStyle = `rgba(255, 255, 255, ${transitionOpacity})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (transitionOpacity >= 1 && !finalMessageShown) {
+        const config = nivelConfig[nivelActual];
+        finalMessage.style.display = "block";
+        finalMessage.style.opacity = 1;
+        finalMessage.innerHTML = `¡Felicidades, bro! 🎉<br><br> Completaste el Nivel ${nivelActual}: ${config.nombre}.<br>Gracias de corazón por jugar, espero que hayas disfrutado de esta aventura. ¡Te esperamos en futuros desafíos! 😊`;
+        finalMessageShown = true;
+      }
+      
+      if (endFrameCount < 500) {
+        endFrameCount++;
+        animationFrameId = requestAnimationFrame(drawEnding);
+      } else {
+        restartBtn.style.display = "block";
+        restartBtn.textContent = "Volver a Jugar";
+      }
+    }
+
+    function update() {
+      if (gameEnded) {
+        drawEnding();
+        return;
+      }
+
+      if (gamePaused) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawGround();
+
+      const wasInAir = !sonic.grounded;
+      
+      sonic.y += sonic.dy;
+      sonic.dy += sonic.gravity;
+      if (sonic.y >= 360) {
+        if (wasInAir && sonic.dy > 5) {
+          createGroundDust(sonic.x + sonic.width/2, sonic.y + sonic.height);
+        }
+        sonic.y = 360;
+        sonic.dy = 0;
+        sonic.grounded = true;
+      }
+
+      frame++;
+      distance += 0.25 * speedMultiplier;
+      const currentSpeed = (6 + Math.floor(distance / 500)) * speedMultiplier;
+
+      const metaActual = getMetaNivelActual();
+      distanceProgress.style.width = `${(distance / metaActual) * 100}%`;
+      actualizarIndicadorNivel();
+      
+      if (distance >= metaActual) {
+        startEnding();
+        return;
+      }
+      
+      if (distance >= 500 && !achievements.distance500.unlocked) {
+        unlockAchievement('distance500');
+      }
+      if (distance >= 1000 && !achievements.distance1000.unlocked) {
+        unlockAchievement('distance1000');
+      }
+      if (distance >= 2000 && !achievements.distance2000.unlocked) {
+        unlockAchievement('distance2000');
+      }
+      
+      if (Math.floor(distance) % 1000 === 0 && Math.floor(distance) !== lastBonus) {
+        score += 20 * sonic.scoreMultiplier;
+        lastBonus = Math.floor(distance);
+        createScorePopup(canvas.width/2, canvas.height/2, `+20 BONUS!`, "gold");
+      }
+
+      spawnEnvironmentObjects(currentSpeed);
+      updateBirds(currentSpeed);
+      updateCoins(currentSpeed);
+      updateBlobs(currentSpeed);
+      updateParticles();
+      
+      updateScorePopups();
+      updateGroundDust();
+      updatePowerupIndicators();
+      
+      if (speedEffectTimer > 0) {
+        speedEffectTimer--;
+        if (speedEffectTimer === 0) {
+          speedEffect.classList.remove("active");
+        }
+      }
+
+      drawSonic();
+      drawObjects(coins);
+      drawObstacles();
+      
+      birds.forEach(bird => {
+        ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
+      });
+      drawBlobs();
+      drawRamps();
+      drawParticles();
+      
+      drawScorePopups();
+      drawGroundDust();
+
+      checkCollision();
+
+      if (sonic.reviveActive && frame - sonic.reviveInvulnTimer >= 480) {
+        sonic.reviveActive = false;
+      }
+
+      if (sonic.hasShield && frame - sonic.shieldTimer >= 300) {
+        sonic.hasShield = false;
+      }
+      
+      if (sonic.hasMagnet && frame - sonic.magnetTimer >= 300) {
+        sonic.hasMagnet = false;
+        sonic.scoreMultiplier = 1;
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillRect(5, 5, 500, 25);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "14px 'Press Start 2P'";
+      const timeElapsed = Math.floor((Date.now() - startTime) / 1000);
+      ctx.fillText(`🪙 ${sonic.coins} | ⭐ ${score} | 📏 ${Math.floor(distance)}m | ⏳ ${timeElapsed}s | 🏆 ${maxScore} | ☠️ ${deathCount} | 🚀 ${speedMultiplier}x | 🎯 N${nivelActual}`, 10, 23);
+
+      animationFrameId = requestAnimationFrame(update);
+    }
+
+    // Inicializar el juego
+    window.onload = function() {
+        loadAchievements();
+        loadSoundSettings();
+        loadCharacterColor();
+        cambiarANivel(nivelActual);
+        setupLevelSelector();
+        setupColorSelector();
+        
+        setTimeout(() => {
+            resetGame();
+        }, 100);
+    };
+  </script>
+</body>
+</html>
+
